@@ -1,0 +1,5 @@
+{
+    "dart.allowTestsOutsideTestFolder": true,
+    "dart.flutterAndroidX": true,
+    "dart.flutterCreateOffline": true
+}
