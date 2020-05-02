@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
 
 import './widgets/new_transaction.dart';
 import './widgets/transactions_list.dart';
 import './widgets/charts.dart';
 import './models/transaction.dart';
 
-void main() => runApp(MyApp());
+// Future main() async {
+void main() {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.portraitUp,
+  //   DeviceOrientation.portraitDown,
+  // ]);
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -47,20 +56,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Transaction> _transactions = [
-    // Transaction(
-    //   id: 't1',
-    //   title: 'New Shoes',
-    //   amount: 22.55,
-    //   date: DateTime.now(),
-    // ),
-    // Transaction(
-    //   id: 't1',
-    //   title: 'Weekly Groceries',
-    //   amount: 16.89,
-    //   date: DateTime.now(),
-    // ),
-  ];
+  final List<Transaction> _transactions = [];
 
   List<Transaction> get _recentTransactions {
     return _transactions.where((tx) {
@@ -73,6 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }).toList();
   }
+
+  bool _chartSwitch = false;
 
   void _addTransaction({String title, double amount, DateTime selectedDate}) {
     final newTx = Transaction(
@@ -106,16 +104,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+
+    final appBar = AppBar(
+      title: Text('Expenses App'),
+      actions: <Widget>[
+        IconButton(
+          onPressed: () => _showBtmSheetNewTx(context),
+          icon: Icon(Icons.add),
+        )
+      ],
+    );
+
+    final txWidget = Container(
+      height: (mediaQuery.size.height -
+              appBar.preferredSize.height -
+              mediaQuery.padding.top) *
+          0.7,
+      child: TransactionsList(_transactions, _deleteTransaction),
+    );
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Expenses App'),
-        actions: <Widget>[
-          IconButton(
-            onPressed: () => _showBtmSheetNewTx(context),
-            icon: Icon(Icons.add),
-          )
-        ],
-      ),
+      appBar: appBar,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showBtmSheetNewTx(context),
@@ -124,8 +135,40 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            Charts(_recentTransactions),
-            TransactionsList(_transactions, _deleteTransaction),
+            if (isLandscape)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text('Show Charts'),
+                  Switch(
+                    value: _chartSwitch,
+                    onChanged: (value) {
+                      setState(() {
+                        _chartSwitch = value;
+                      });
+                    },
+                  )
+                ],
+              ),
+            if (!isLandscape)
+              Container(
+                height: (mediaQuery.size.height -
+                        appBar.preferredSize.height -
+                        mediaQuery.padding.top) *
+                    0.3,
+                child: Charts(_recentTransactions),
+              ),
+            if (!isLandscape) txWidget,
+            if (isLandscape)
+              _chartSwitch
+                  ? Container(
+                      height: (mediaQuery.size.height -
+                              appBar.preferredSize.height -
+                              mediaQuery.padding.top) *
+                          0.7,
+                      child: Charts(_recentTransactions),
+                    )
+                  : txWidget,
           ],
         ),
       ),
